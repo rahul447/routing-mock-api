@@ -69,14 +69,14 @@ router.get('/route/:token', function* (next) {
     })
 })
  
-const options = {
+const corsOptions = {
     "Access-Control-Allow-Origin": '*',
     "Access-Control-Allow-Methods": 'GET,HEAD,PUT,POST,DELETE,PATCH',
 };
 
 app
 .use(logger())
-.use(cors(options))
+.use(cors(corsOptions))
 .use(router.routes())
 .use(router.allowedMethods())
 
