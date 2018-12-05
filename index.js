@@ -25,8 +25,10 @@ async function getLatLongByLocation(loc) {
 }
 
 router.post('/route', function* () {
-    yield Promise.all([getLatLongByLocation(this.request.header.start), 
-        getLatLongByLocation(this.request.header.drop)])
+    yield Promise.all([
+        getLatLongByLocation(this.request.header.start), 
+        getLatLongByLocation(this.request.header.drop)
+    ])
     .then((latLongs) => {
         this.body = {
             "token": "9d3503e0-7236-4e47-a62f-8b01b5646c16",
@@ -36,12 +38,25 @@ router.post('/route', function* () {
     })
 })
 
+router.post('/route/autoComplete', function* () {
+    console.log("this.request", this.request)
+    let input = this.request.header.input
+    let sessiontoken = this.request.header.sessiontoken
+    let query = { input, sessiontoken }
+    yield new Promise((resolve) => {
+        googleMapsClient.placesAutoComplete(query, (err, response) => {
+            this.body = {
+                status: 'success',
+                results: {...response.json}
+            }
+            resolve()
+        }) 
+    })
+})
+
 router.get('/route/:token', function* (next) {
     const origins = JSON.parse(this.request.header.start)
     const destinations = JSON.parse(this.request.header.drop)
-    console.log("origins : ", origins)
-    console.log("destinations ", destinations)
-    console.log("methods", Object.getOwnPropertyNames(googleMapsClient))
 
     yield new Promise((resolve) => {
         googleMapsClient.distanceMatrix({origins, destinations}, (err, response) => {
@@ -54,16 +69,14 @@ router.get('/route/:token', function* (next) {
     })
 })
  
-var options = {
+const options = {
     "Access-Control-Allow-Origin": '*',
     "Access-Control-Allow-Methods": 'GET,HEAD,PUT,POST,DELETE,PATCH',
 };
 
-app.use(cors(options));
-
 app
 .use(logger())
-//.use(cors())
+.use(cors(options))
 .use(router.routes())
 .use(router.allowedMethods())
 
